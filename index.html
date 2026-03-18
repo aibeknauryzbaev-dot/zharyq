@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Жарықтың шағылуы - 3 сынып</title>
+    <style>
+        /* НЕГІЗГІ ТҮСТЕР МЕН ҚААРІПТЕР */
+        :root {
+            --primary: #0070C0; /* Көк */
+            --secondary: #00B0F0; /* Ашық көгілдір */
+            --accent: #FFC000; /* Сары */
+            --white: #FFFFFF; /* Ақ */
+            --bg-color: #E6F7FF;
+            --text-dark: #1F3A52;
+            --success: #32CD32;
+            --danger: #FF4500;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', 'Arial Rounded MT Bold', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            /* Қазақы ою-өрнек фоны (SVG Data URI) */
+            background-image: url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M60 0 C40 20 20 20 0 0 L0 10 C20 30 40 30 60 10 C80 30 100 30 120 10 L120 0 C100 20 80 20 60 0 Z M60 120 C40 100 20 100 0 120 L0 110 C20 90 40 90 60 110 C80 90 100 90 120 110 L120 120 C100 100 80 100 60 120 Z' fill='%2300b0f0' fill-opacity='0.1'/%3E%3C/svg%3E");
+            background-attachment: fixed;
+            overflow-x: hidden;
+        }
+
+        /* ОРТАҚ СТИЛЬДЕР */
+        h1, h2, h3 { text-align: center; color: var(--primary); text-shadow: 2px 2px 4px rgba(0,0,0,0.1); }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .hidden { display: none !important; }
+        .btn {
+            background-color: var(--accent);
+            color: var(--text-dark);
+            border: none;
+            padding: 15px 25px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 15px;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #D4A000, 0 8px 15px rgba(0,0,0,0.2);
+            transition: all 0.2s;
+            margin: 10px;
+        }
+        .btn:active { transform: translateY(5px); box-shadow: 0 0 0 #D4A000, 0 3px 5px rgba(0,0,0,0.2); }
+        .btn:hover { background-color: #FFD24D; }
+        .btn-primary { background-color: var(--primary); color: white; box-shadow: 0 5px 0 #004C82; }
+        .btn-primary:active { box-shadow: 0 0 0 #004C82; }
+        .btn-primary:hover { background-color: #0082E0; }
+
+        .section-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 25px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 25px rgba(0,112,192,0.15);
+            border: 3px solid var(--secondary);
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pop { 0% { transform: scale(0.9); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        /* БАСТЫ ЭКРАН */
+        #welcome-screen { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        #welcome-screen h1 { font-size: 4rem; margin-bottom: 10px; color: var(--primary); text-shadow: 3px 3px 0 var(--accent); }
+        #welcome-screen p { font-size: 1.8rem; color: var(--secondary); font-weight: bold; margin-bottom: 40px; }
+
+        /* SCOREBOARD (ҰПАЙЛАР ТАҚТАСЫ) */
+        #scoreboard {
+            position: sticky;
+            top: 0;
+            background: var(--white);
+            z-index: 100;
+            padding: 15px;
+            border-bottom: 4px solid var(--secondary);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .teams-container { display: flex; gap: 20px; flex-grow: 1; justify-content: center; }
+        .team-score {
+            background: var(--bg-color);
+            border: 3px solid var(--primary);
+            border-radius: 15px;
+            padding: 10px 20px;
+            text-align: center;
+            min-width: 150px;
+        }
+        .team-score h3 { margin: 0; font-size: 1.5rem; color: var(--primary); }
+        .team-score .score { font-size: 2.5rem; font-weight: bold; color: var(--accent); text-shadow: 1px 1px 0 #000; }
+        .controls { display: flex; gap: 10px; }
+        .controls button { padding: 10px 15px; font-size: 1rem; border-radius: 10px; }
+
+        /* ОЙЫН ИНТЕРФЕЙСІ (4 ТОПҚА АРНАЛҒАН) */
+        .question-box { background: var(--secondary); color: white; padding: 20px; border-radius: 20px; font-size: 2rem; text-align: center; margin-bottom: 30px; box-shadow: inset 0 -5px 0 rgba(0,0,0,0.1); }
+        .teams-grid { 
+            display: grid; 
+            gap: 15px; 
+            /* Бағандар саны JS арқылы динамикалық түрде беріледі */
+        }
+        .team-panel {
+            background: white; border: 3px solid var(--primary); border-radius: 20px; padding: 15px; text-align: center;
+            display: flex; flex-direction: column; gap: 10px; transition: 0.3s;
+        }
+        .team-panel h4 { margin: 0 0 15px 0; font-size: 1.5rem; color: var(--primary); border-bottom: 2px dashed var(--secondary); padding-bottom: 5px; }
+        .answer-btn { background: var(--bg-color); border: 2px solid var(--secondary); padding: 12px; font-size: 1.1rem; border-radius: 12px; cursor: pointer; transition: 0.2s; font-weight: bold; }
+        .answer-btn:hover:not(:disabled) { background: var(--secondary); color: white; }
+        .answer-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .team-panel.answered-correct { background-color: #e8f5e9; border-color: var(--success); }
+        .team-panel.answered-wrong { background-color: #ffebee; border-color: var(--danger); }
+        .team-panel.answered-waiting { background-color: #fffde7; border-color: var(--accent); }
+        .next-btn-container { text-align: center; margin-top: 30px; }
+
+        /* БАТЫРМАЛАРДЫ БІР ҚАТАРҒА ҚОЮ ҮШІН ЖАҢА КЛАСС */
+        .button-group {
+            display: flex;
+            flex-direction: column; /* 4 топ бір қатарда тұрғандықтан, батырмалар мәтіні сыюы үшін тігінен қоямыз */
+            gap: 10px;
+            width: 100%;
+        }
+        .button-group .answer-btn {
+            flex: 1; 
+            padding: 12px 5px;
+            font-size: 1.05rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            word-break: break-word; 
+        }
+
+        /* ОРНЫНА ОРНАЛАСТЫР (2-ОЙЫН) */
+        .drag-game-area { display: flex; flex-direction: column; gap: 20px; align-items: center; }
+        .items-pool { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; min-height: 80px; padding: 15px; background: var(--bg-color); border-radius: 15px; border: 2px dashed var(--primary); width: 100%; }
+        .drag-item { background: var(--accent); color: var(--text-dark); padding: 15px 25px; border-radius: 25px; font-weight: bold; font-size: 1.3rem; cursor: pointer; box-shadow: 0 4px 0 #D4A000; transition: transform 0.2s; user-select: none; }
+        .drag-item.selected { transform: scale(1.1); box-shadow: 0 0 15px var(--primary); border: 2px solid var(--primary); }
+        .drop-zones { display: flex; gap: 30px; width: 100%; justify-content: center; flex-wrap: wrap; }
+        .drop-zone { flex: 1; min-width: 300px; background: white; border: 4px solid var(--secondary); border-radius: 20px; padding: 20px; text-align: center; min-height: 250px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .drop-zone h3 { margin-top: 0; color: var(--primary); }
+        .teacher-controls { background: var(--bg-color); padding: 20px; border-radius: 15px; border: 2px solid var(--primary); text-align: center; width: 100%; margin-top: 20px; }
+        .teacher-controls select { padding: 10px; font-size: 1.2rem; border-radius: 10px; border: 2px solid var(--primary); margin-right: 10px; }
+
+        /* ҚОСЫМША БӨЛІМ ЖӘНЕ КЕРІ БАЙЛАНЫС */
+        .ideas-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .idea-card { background: #fff9e6; border-radius: 15px; padding: 20px; border: 2px solid var(--accent); }
+        .feedback-grid { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+        .feedback-card { flex: 1; min-width: 250px; text-align: center; padding: 30px; border-radius: 20px; font-size: 1.5rem; font-weight: bold; cursor: pointer; transition: 0.3s; color: white; }
+        .feedback-card:hover { transform: scale(1.05); }
+        .fb-green { background: #32CD32; box-shadow: 0 5px 0 #228B22; }
+        .fb-yellow { background: #FFC000; box-shadow: 0 5px 0 #D4A000; color: var(--text-dark); }
+        .fb-red { background: #FF4500; box-shadow: 0 5px 0 #CC3700; }
+        .fb-badge { display: inline-block; background: rgba(255,255,255,0.9); color: var(--text-dark); border-radius: 20px; padding: 2px 12px; margin-left: 10px; font-size: 1.2rem; box-shadow: 0 2px 5px rgba(0,0,0,0.2); font-weight: bold; }
+
+        /* ЖЕҢІМПАЗ ЭКРАНЫ */
+        #winner-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 112, 192, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; color: white; text-align: center; }
+        #winner-screen h1 { color: var(--accent); font-size: 5rem; text-shadow: 4px 4px 0 var(--text-dark); margin: 0; animation: pop 1s infinite; }
+        #winner-screen p { font-size: 3rem; margin: 20px 0; }
+        .confetti { position: absolute; width: 15px; height: 15px; background: var(--accent); animation: fall 3s linear infinite; }
+        @keyframes fall { 0% { transform: translateY(-100vh) rotate(0deg); } 100% { transform: translateY(100vh) rotate(360deg); } }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            #scoreboard { flex-direction: column; }
+            .teams-container { flex-wrap: wrap; }
+            .ideas-grid { grid-template-columns: 1fr; }
+            /* Мобильді телефонда өте кішкентай болса ғана 2 бағаннан болады */
+            .teams-grid { grid-template-columns: 1fr 1fr !important; } 
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ТОЛЫҚ ЭКРАН БАТЫРМАСЫ (БЕКІТІЛГЕН) -->
+    <button class="btn btn-primary" style="position: fixed; top: 10px; right: 10px; z-index: 1000; padding: 10px 15px; font-size: 1rem; margin: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.3);" onclick="toggleFullScreen()" id="fs-btn">
+        ⛶ Толық экран
+    </button>
+
+    <!-- БАСТЫ ЭКРАН -->
+    <div id="welcome-screen">
+        <h1>Жарықтың шағылуы</h1>
+        <p>3-сыныпқа арналған интерактивті ашық сабақ ойыны</p>
+        
+        <div style="margin-bottom: 30px; background: rgba(255,255,255,0.8); padding: 20px; border-radius: 15px; border: 2px solid var(--primary);">
+            <label for="num-teams" style="font-size: 1.5rem; font-weight: bold; color: var(--primary); display: block; margin-bottom: 10px;">Ойнайтын топ санын таңдаңыз:</label>
+            <select id="num-teams" style="font-size: 1.5rem; padding: 10px 20px; border-radius: 10px; border: 2px solid var(--secondary); font-weight: bold;">
+                <option value="2">2 топ (Айна, Шыны)</option>
+                <option value="3">3 топ (Айна, Шыны, Су)</option>
+                <option value="4" selected>4 топ (Айна, Шыны, Су, Металл)</option>
+            </select>
+        </div>
+
+        <button class="btn btn-primary" style="font-size: 2rem; padding: 20px 50px;" onclick="startGame()">Ойынды бастау</button>
+    </div>
+
+    <!-- ҰПАЙЛАР ТАҚТАСЫ -->
+    <div id="scoreboard" class="hidden">
+        <div class="teams-container" id="teams-container">
+            <!-- Топтардың ұпайы JS арқылы жасалады -->
+        </div>
+        <div class="controls">
+            <button class="btn" style="background: var(--danger); color: white; box-shadow: 0 4px 0 #CC3700;" onclick="resetScores()">Ұпайды нөлдеу</button>
+            <button class="btn btn-primary" onclick="restartGame()">Басынан бастау</button>
+        </div>
+    </div>
+
+    <div id="game-content" class="container hidden">
+
+        <!-- 1-ОЙЫН -->
+        <div class="section-card" id="game1-section">
+            <h2>1-ойын: «Кім жылдам?» (Ортақ тапсырма)</h2>
+            <div id="g1-question-container">
+                <div class="question-box" id="g1-question-text">Сұрақ жүктелуде...</div>
+                <div class="teams-grid" id="g1-teams-grid">
+                    <!-- Топтардың жауап беру панельдері JS арқылы жасалады -->
+                </div>
+                <div class="next-btn-container hidden" id="g1-next-btn-div">
+                    <button class="btn btn-primary" onclick="nextQuestionG1()">Келесі сұрақ</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2-ОЙЫН -->
+        <div class="section-card" id="game2-section">
+            <h2>2-ойын: «Орнына орналастыр»</h2>
+            <p style="text-align: center; font-size: 1.2rem;"><b>Нұсқау:</b> Төмендегі сөзді басып таңдаңыз, сосын тиісті бағанды басып орналастырыңыз.</p>
+            <div class="drag-game-area">
+                <div class="items-pool" id="g2-pool">
+                    <!-- Сөздер JS арқылы қосылады -->
+                </div>
+                <div class="drop-zones">
+                    <div class="drop-zone" id="zone-good" onclick="dropItem('good')">
+                        <h3>✨ Жақсы шағылдырады</h3>
+                    </div>
+                    <div class="drop-zone" id="zone-bad" onclick="dropItem('bad')">
+                        <h3>🌑 Нашар шағылдырады</h3>
+                    </div>
+                </div>
+                
+                <div class="teacher-controls hidden" id="g2-teacher-controls">
+                    <h3>Тапсырма орындалды! Мұғалім бөлімі:</h3>
+                    <select id="g2-team-select">
+                        <!-- JS арқылы толтырылады -->
+                    </select>
+                    <button class="btn btn-primary" onclick="awardGame2Single()">Таңдалған топқа 20 ұпай беру</button>
+                    <br><br>
+                    <button class="btn" onclick="awardGame2All()">Барлық топқа 10 ұпайдан беру</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3-ОЙЫН -->
+        <div class="section-card" id="game3-section">
+            <h2>3-ойын: «Дұрыс па, бұрыс па?»</h2>
+            <div id="g3-question-container">
+                <div class="question-box" id="g3-question-text" style="background: var(--primary);">Сөйлем жүктелуде...</div>
+                <div class="teams-grid" id="g3-teams-grid">
+                    <!-- Топтар панельдері JS арқылы -->
+                </div>
+                <div class="next-btn-container hidden" id="g3-next-btn-div">
+                    <button class="btn btn-primary" onclick="nextQuestionG3()">Келесі сөйлем</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- КЕРІ БАЙЛАНЫС -->
+        <div class="section-card">
+            <h2>Сабақтан алған әсерің қандай? (Кері байланыс)</h2>
+            <div class="feedback-grid">
+                <div class="feedback-card fb-green" onclick="registerFeedback('green')">🟢 Мен бәрін түсіндім! <span id="fb-count-green" class="fb-badge hidden">0</span></div>
+                <div class="feedback-card fb-yellow" onclick="registerFeedback('yellow')">🟡 Аздап қиналдым <span id="fb-count-yellow" class="fb-badge hidden">0</span></div>
+                <div class="feedback-card fb-red" onclick="registerFeedback('red')">🔴 Маған көмек керек <span id="fb-count-red" class="fb-badge hidden">0</span></div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin: 50px 0;">
+            <button class="btn btn-primary" style="font-size: 2rem; padding: 20px 40px;" onclick="calculateWinner()">🏆 Жеңімпаз топты анықтау 🏆</button>
+        </div>
+
+    </div>
+
+    <!-- ЖЕҢІМПАЗ ЭКРАНЫ -->
+    <div id="winner-screen" class="hidden">
+        <h2>Сабақтың қорытындысы</h2>
+        <h1 id="winner-name">Айна тобы жеңімпаз!</h1>
+        <p id="winner-score">Ұпайы: 150</p>
+        <button class="btn" style="margin-top: 30px;" onclick="closeWinnerScreen()">Ойынға оралу</button>
+        <!-- Confetti elements will be added by JS -->
+    </div>
+
+    <script>
+        // --- ДЫБЫСТАР ЖҮЙЕСІ (Web Audio API) ---
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+        function playTone(freq, type, duration, vol=0.1) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+        function playCorrect() {
+            playTone(523.25, 'sine', 0.1); // C5
+            setTimeout(() => playTone(659.25, 'sine', 0.2), 100); // E5
+        }
+        function playWrong() {
+            playTone(300, 'sawtooth', 0.2);
+            setTimeout(() => playTone(250, 'sawtooth', 0.3), 150);
+        }
+        function playWin() {
+            let delay = 0;
+            [523.25, 659.25, 783.99, 1046.50].forEach(freq => {
+                setTimeout(() => playTone(freq, 'square', 0.2, 0.05), delay);
+                delay += 100;
+            });
+            setTimeout(() => playTone(1046.50, 'square', 0.5, 0.05), delay);
+        }
+
+        // --- ДЕРЕКТЕР МЕН КҮЙЛЕР ---
+        const allTeams = ["Айна", "Шыны", "Су", "Металл"];
+        let numTeams = 4;
+        let teams = [];
+        let scores = [];
+
+        // 1-ойын деректері
+        const game1Questions = [
+            { q: "Қай зат жарықты жақсы шағылдырады?", opts: ["Қара мата", "Айна", "Картон", "Ағаш"], ans: 1 },
+            { q: "Жарықтың шағылуы дегеніміз не?", opts: ["Жарықтың жоғалуы", "Жарықтың қызуы", "Жарықтың кері қайтуы", "Жарықтың ұшуы"], ans: 2 },
+            { q: "Қай бет жарықты нашар шағылдырады?", opts: ["Фольга", "Металл қасық", "Кедір-бұдыр мата", "Айна"], ans: 2 },
+            { q: "Жарықтың шағылуы қайда қолданылады?", opts: ["Айнада", "Жол белгілерінде", "Велосипед шағылыстырғышында", "Барлығы дұрыс"], ans: 3 }
+        ];
+        let g1CurrentQ = 0;
+        let g1AnsweredCount = 0;
+        let g1TeamAnswered = [];
+        let g1SelectedAnswers = [];
+
+        // 3-ойын деректері
+        const game3Questions = [
+            { q: "Айна жарықты жақсы шағылдырады.", ans: true },
+            { q: "Қара мата жарықты өте жақсы шағылдырады.", ans: false },
+            { q: "Су беті жарықты шағылдыра алады.", ans: true },
+            { q: "Барлық зат жарықты бірдей шағылдырады.", ans: false },
+            { q: "Жылтыр, тегіс беттер жарықты жақсы шағылдырады.", ans: true }
+        ];
+        let g3CurrentQ = 0;
+        let g3AnsweredCount = 0;
+        let g3TeamAnswered = [];
+        let g3SelectedAnswers = [];
+
+        // 2-ойын деректері (Таңдау және орналастыру)
+        const game2Items = [
+            { id: "i1", name: "Айна", type: "good" },
+            { id: "i2", name: "Фольга", type: "good" },
+            { id: "i3", name: "Металл қасық", type: "good" },
+            { id: "i4", name: "Тынық су беті", type: "good" },
+            { id: "i5", name: "Қара мата", type: "bad" },
+            { id: "i6", name: "Кедір-бұдыр қағаз", type: "bad" },
+            { id: "i7", name: "Ағаш", type: "bad" },
+            { id: "i8", name: "Кітап мұқабасы", type: "bad" }
+        ];
+        let selectedItem = null;
+        let g2Remaining = game2Items.length;
+
+        // --- БАСТАУ ЖӘНЕ ҰПАЙЛАР ---
+        function startGame() {
+            initAudio();
+            
+            numTeams = parseInt(document.getElementById('num-teams').value);
+            teams = allTeams.slice(0, numTeams);
+            scores = new Array(numTeams).fill(0);
+
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('scoreboard').classList.remove('hidden');
+            document.getElementById('game-content').classList.remove('hidden');
+            
+            renderScoreboardUI();
+            updateScoreboard();
+            renderGame1();
+            renderGame2();
+            renderGame3();
+        }
+
+        function renderScoreboardUI() {
+            const container = document.getElementById('teams-container');
+            container.innerHTML = '';
+            for(let i=0; i<numTeams; i++) {
+                container.innerHTML += `
+                <div class="team-score" id="score-card-${i}">
+                    <h3>${teams[i]} тобы</h3>
+                    <div class="score" id="score-${i}">0</div>
+                </div>`;
+            }
+        }
+
+        function updateScoreboard() {
+            for(let i=0; i<numTeams; i++) {
+                const el = document.getElementById(`score-${i}`);
+                if (el) {
+                    el.innerText = scores[i];
+                    el.style.animation = 'none';
+                    void el.offsetWidth; // trigger reflow
+                    el.style.animation = 'pop 0.3s';
+                }
+            }
+        }
+
+        function addScore(teamIdx, points) {
+            scores[teamIdx] += points;
+            updateScoreboard();
+        }
+
+        function resetScores() {
+            scores = new Array(numTeams).fill(0);
+            updateScoreboard();
+        }
+
+        function restartGame() {
+            resetScores();
+            g1CurrentQ = 0;
+            g3CurrentQ = 0;
+            renderGame1();
+            renderGame2();
+            renderGame3();
+            window.scrollTo(0, 0);
+        }
+
+        // --- ТОЛЫҚ ЭКРАН ФУНКЦИЯСЫ ---
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Толық экранды қосу мүмкін болмады: ${err.message}`);
+                });
+                document.getElementById('fs-btn').innerText = '🗗 Экранды кішірейту';
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                    document.getElementById('fs-btn').innerText = '⛶ Толық экран';
+                }
+            }
+        }
+
+        // --- 1-ОЙЫН ЛОГИКАСЫ ---
+        function renderGame1() {
+            if (g1CurrentQ >= game1Questions.length) {
+                document.getElementById('g1-question-container').innerHTML = `<div class="question-box">1-ойын аяқталды! Жарайсыңдар! 🎉</div>`;
+                return;
+            }
+            const q = game1Questions[g1CurrentQ];
+            document.getElementById('g1-question-text').innerText = `${g1CurrentQ + 1}-сұрақ: ${q.q}`;
+            
+            g1AnsweredCount = 0;
+            g1TeamAnswered = new Array(numTeams).fill(false);
+            g1SelectedAnswers = new Array(numTeams).fill(null);
+            document.getElementById('g1-next-btn-div').classList.add('hidden');
+
+            const grid = document.getElementById('g1-teams-grid');
+            grid.innerHTML = '';
+            grid.style.gridTemplateColumns = `repeat(${numTeams}, 1fr)`;
+
+            for(let i=0; i<numTeams; i++) {
+                const panel = document.createElement('div');
+                panel.className = 'team-panel';
+                panel.id = `g1-team-${i}`;
+                panel.innerHTML = `<h4>${teams[i]} тобы</h4>`;
+                
+                const btnGroup = document.createElement('div');
+                btnGroup.className = 'button-group';
+
+                q.opts.forEach((optText, optIdx) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'answer-btn';
+                    btn.innerText = optText;
+                    btn.onclick = () => handleG1Answer(i, optIdx, q.ans, panel);
+                    btnGroup.appendChild(btn);
+                });
+                
+                panel.appendChild(btnGroup);
+                grid.appendChild(panel);
+            }
+        }
+
+        function handleG1Answer(teamIdx, selectedOpt, correctOpt, panelEl) {
+            if (g1TeamAnswered[teamIdx]) return;
+            
+            g1TeamAnswered[teamIdx] = true;
+            g1SelectedAnswers[teamIdx] = selectedOpt;
+            g1AnsweredCount++;
+            
+            const buttons = panelEl.querySelectorAll('button');
+            buttons.forEach((b, idx) => {
+                b.disabled = true;
+                if (idx === selectedOpt) {
+                    b.style.backgroundColor = "var(--accent)";
+                    b.style.color = "var(--text-dark)";
+                }
+            });
+
+            panelEl.classList.add('answered-waiting');
+            playTone(400, 'sine', 0.1); // Таңдалған кездегі кішігірім дыбыс
+
+            if (g1AnsweredCount === numTeams) {
+                // Барлық топ жауап бергенде ғана жауаптарды ашу
+                setTimeout(() => revealG1Answers(correctOpt), 500);
+            }
+        }
+
+        function revealG1Answers(correctOpt) {
+            let anyCorrect = false;
+            for(let i=0; i<numTeams; i++) {
+                const panelEl = document.getElementById(`g1-team-${i}`);
+                const selectedOpt = g1SelectedAnswers[i];
+                const buttons = panelEl.querySelectorAll('button');
+                
+                panelEl.classList.remove('answered-waiting');
+                
+                if (selectedOpt === correctOpt) {
+                    panelEl.classList.add('answered-correct');
+                    buttons[selectedOpt].style.backgroundColor = "var(--success)";
+                    buttons[selectedOpt].style.color = "white";
+                    addScore(i, 10);
+                    anyCorrect = true;
+                } else {
+                    panelEl.classList.add('answered-wrong');
+                    if (selectedOpt !== null) {
+                        buttons[selectedOpt].style.backgroundColor = "var(--danger)";
+                        buttons[selectedOpt].style.color = "white";
+                    }
+                    buttons[correctOpt].style.backgroundColor = "var(--success)";
+                    buttons[correctOpt].style.color = "white";
+                }
+            }
+            
+            if(anyCorrect) playCorrect();
+            else playWrong();
+
+            document.getElementById('g1-next-btn-div').classList.remove('hidden');
+        }
+
+        function nextQuestionG1() {
+            g1CurrentQ++;
+            renderGame1();
+        }
+
+        // --- 2-ОЙЫН ЛОГИКАСЫ (Таңдау және орналастыру) ---
+        function renderGame2() {
+            const pool = document.getElementById('g2-pool');
+            const zoneGood = document.getElementById('zone-good');
+            const zoneBad = document.getElementById('zone-bad');
+            
+            // Тазарту
+            pool.innerHTML = '';
+            // Тақырыптардан басқасын өшіру
+            Array.from(zoneGood.children).forEach(c => { if(c.tagName !== 'H3') c.remove(); });
+            Array.from(zoneBad.children).forEach(c => { if(c.tagName !== 'H3') c.remove(); });
+            
+            document.getElementById('g2-teacher-controls').classList.add('hidden');
+            g2Remaining = game2Items.length;
+            selectedItem = null;
+
+            // Сөздерді араластыру (күнделікті сабақ үшін қызықты)
+            const shuffled = [...game2Items].sort(() => Math.random() - 0.5);
+
+            shuffled.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'drag-item';
+                el.innerText = item.name;
+                el.dataset.type = item.type;
+                el.dataset.id = item.id;
+                el.onclick = () => selectItem(el);
+                pool.appendChild(el);
+            });
+        }
+
+        function selectItem(el) {
+            // Бұрын таңдалғанның стилін алып тастау
+            document.querySelectorAll('.drag-item').forEach(i => i.classList.remove('selected'));
+            selectedItem = el;
+            el.classList.add('selected');
+        }
+
+        function dropItem(targetType) {
+            if (!selectedItem) return;
+
+            const itemType = selectedItem.dataset.type;
+            
+            if (itemType === targetType) {
+                // Дұрыс
+                playCorrect();
+                selectedItem.classList.remove('selected');
+                selectedItem.onclick = null; // қайта басылмауы үшін
+                selectedItem.style.cursor = 'default';
+                
+                if (targetType === 'good') {
+                    document.getElementById('zone-good').appendChild(selectedItem);
+                } else {
+                    document.getElementById('zone-bad').appendChild(selectedItem);
+                }
+                
+                selectedItem = null;
+                g2Remaining--;
+                
+                if (g2Remaining === 0) {
+                    setTimeout(() => {
+                        const select = document.getElementById('g2-team-select');
+                        select.innerHTML = '';
+                        for(let i=0; i<numTeams; i++) {
+                            select.innerHTML += `<option value="${i}">${teams[i]} тобына (+20)</option>`;
+                        }
+                        document.getElementById('g2-teacher-controls').classList.remove('hidden');
+                        playWin();
+                    }, 500);
+                }
+            } else {
+                // Қате
+                playWrong();
+                selectedItem.classList.remove('selected');
+                selectedItem.style.animation = 'pop 0.3s';
+                setTimeout(() => { selectedItem.style.animation = 'none'; }, 300);
+                selectedItem = null;
+            }
+        }
+
+        function awardGame2Single() {
+            const teamIdx = parseInt(document.getElementById('g2-team-select').value);
+            addScore(teamIdx, 20);
+            playCorrect();
+            document.getElementById('g2-teacher-controls').innerHTML = `<h3>Ұпай берілді! ✅</h3>`;
+        }
+
+        function awardGame2All() {
+            for(let i=0; i<numTeams; i++) addScore(i, 10);
+            playCorrect();
+            document.getElementById('g2-teacher-controls').innerHTML = `<h3>Барлық топқа ұпай берілді! ✅</h3>`;
+        }
+
+        // --- 3-ОЙЫН ЛОГИКАСЫ ---
+        function renderGame3() {
+            if (g3CurrentQ >= game3Questions.length) {
+                document.getElementById('g3-question-container').innerHTML = `<div class="question-box">3-ойын аяқталды! Керемет! 🎉</div>`;
+                return;
+            }
+            const q = game3Questions[g3CurrentQ];
+            document.getElementById('g3-question-text').innerText = `${g3CurrentQ + 1}. ${q.q}`;
+            
+            g3AnsweredCount = 0;
+            g3TeamAnswered = new Array(numTeams).fill(false);
+            g3SelectedAnswers = new Array(numTeams).fill(null);
+            document.getElementById('g3-next-btn-div').classList.add('hidden');
+
+            const grid = document.getElementById('g3-teams-grid');
+            grid.innerHTML = '';
+            grid.style.gridTemplateColumns = `repeat(${numTeams}, 1fr)`;
+
+            for(let i=0; i<numTeams; i++) {
+                const panel = document.createElement('div');
+                panel.className = 'team-panel';
+                panel.id = `g3-team-${i}`;
+                panel.innerHTML = `<h4>${teams[i]} тобы</h4>`;
+                
+                const btnGroup = document.createElement('div');
+                btnGroup.className = 'button-group';
+
+                const btnTrue = document.createElement('button');
+                btnTrue.className = 'answer-btn';
+                btnTrue.innerText = 'Дұрыс 👍';
+                btnTrue.style.borderColor = 'var(--success)';
+                btnTrue.onclick = () => handleG3Answer(i, true, q.ans, panel);
+
+                const btnFalse = document.createElement('button');
+                btnFalse.className = 'answer-btn';
+                btnFalse.innerText = 'Бұрыс 👎';
+                btnFalse.style.borderColor = 'var(--danger)';
+                btnFalse.onclick = () => handleG3Answer(i, false, q.ans, panel);
+
+                btnGroup.appendChild(btnTrue);
+                btnGroup.appendChild(btnFalse);
+                
+                panel.appendChild(btnGroup);
+                grid.appendChild(panel);
+            }
+        }
+
+        function handleG3Answer(teamIdx, selectedVal, correctVal, panelEl) {
+            if (g3TeamAnswered[teamIdx]) return;
+            
+            g3TeamAnswered[teamIdx] = true;
+            g3SelectedAnswers[teamIdx] = selectedVal;
+            g3AnsweredCount++;
+            
+            const buttons = panelEl.querySelectorAll('button');
+            buttons.forEach((b, idx) => {
+                b.disabled = true;
+                // btnTrue - 0 индекс, btnFalse - 1 индекс
+                if ((selectedVal === true && idx === 0) || (selectedVal === false && idx === 1)) {
+                    b.style.backgroundColor = "var(--accent)";
+                    b.style.color = "var(--text-dark)";
+                }
+            });
+
+            panelEl.classList.add('answered-waiting');
+            playTone(400, 'sine', 0.1);
+
+            if (g3AnsweredCount === numTeams) {
+                setTimeout(() => revealG3Answers(correctVal), 500);
+            }
+        }
+
+        function revealG3Answers(correctVal) {
+            let anyCorrect = false;
+            for(let i=0; i<numTeams; i++) {
+                const panelEl = document.getElementById(`g3-team-${i}`);
+                const selectedVal = g3SelectedAnswers[i];
+                const buttons = panelEl.querySelectorAll('button');
+                const btnTrue = buttons[0];
+                const btnFalse = buttons[1];
+                
+                panelEl.classList.remove('answered-waiting');
+                
+                if (selectedVal === correctVal) {
+                    panelEl.classList.add('answered-correct');
+                    if (selectedVal === true) {
+                        btnTrue.style.backgroundColor = "var(--success)";
+                        btnTrue.style.color = "white";
+                    } else {
+                        btnFalse.style.backgroundColor = "var(--success)";
+                        btnFalse.style.color = "white";
+                    }
+                    addScore(i, 10);
+                    anyCorrect = true;
+                } else {
+                    panelEl.classList.add('answered-wrong');
+                    if (selectedVal === true) {
+                        btnTrue.style.backgroundColor = "var(--danger)";
+                        btnTrue.style.color = "white";
+                    } else if (selectedVal === false) {
+                        btnFalse.style.backgroundColor = "var(--danger)";
+                        btnFalse.style.color = "white";
+                    }
+                    
+                    if (correctVal === true) {
+                        btnTrue.style.backgroundColor = "var(--success)";
+                        btnTrue.style.color = "white";
+                    } else {
+                        btnFalse.style.backgroundColor = "var(--success)";
+                        btnFalse.style.color = "white";
+                    }
+                }
+            }
+            
+            if(anyCorrect) playCorrect();
+            else playWrong();
+
+            document.getElementById('g3-next-btn-div').classList.remove('hidden');
+        }
+
+        function nextQuestionG3() {
+            g3CurrentQ++;
+            renderGame3();
+        }
+
+        // --- КЕРІ БАЙЛАНЫС ---
+        let feedbackCounts = { green: 0, yellow: 0, red: 0 };
+        function registerFeedback(type) {
+            feedbackCounts[type]++;
+            const badge = document.getElementById(`fb-count-${type}`);
+            badge.innerText = feedbackCounts[type];
+            badge.classList.remove('hidden');
+            
+            // Анимация
+            badge.style.animation = 'none';
+            void badge.offsetWidth; // trigger reflow
+            badge.style.animation = 'pop 0.3s';
+            
+            playCorrect();
+        }
+
+        // --- ЖЕҢІМПАЗДЫ АНЫҚТАУ ---
+        function calculateWinner() {
+            playWin();
+            const maxScore = Math.max(...scores);
+            const winners = [];
+            
+            for(let i=0; i<numTeams; i++) {
+                if(scores[i] === maxScore) winners.push(teams[i]);
+            }
+
+            const winScreen = document.getElementById('winner-screen');
+            const winName = document.getElementById('winner-name');
+            const winScore = document.getElementById('winner-score');
+
+            if (winners.length > 1) {
+                winName.innerText = `Тең нәтиже!\n${winners.join(', ')} топтары!`;
+            } else {
+                winName.innerText = `${winners[0]} тобы жеңімпаз! 🏆`;
+            }
+            winScore.innerText = `Жоғарғы ұпай: ${maxScore}`;
+
+            winScreen.classList.remove('hidden');
+            createConfetti();
+        }
+
+        function closeWinnerScreen() {
+            document.getElementById('winner-screen').classList.add('hidden');
+            const confettis = document.querySelectorAll('.confetti');
+            confettis.forEach(c => c.remove());
+        }
+
+        function createConfetti() {
+            const screen = document.getElementById('winner-screen');
+            const colors = ['#FFC000', '#0070C0', '#32CD32', '#FF4500', '#FFFFFF'];
+            for(let i=0; i<50; i++) {
+                const conf = document.createElement('div');
+                conf.className = 'confetti';
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                conf.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                conf.style.animationDelay = Math.random() * 2 + 's';
+                screen.appendChild(conf);
+            }
+        }
+    </script>
+</body>
+</html>
